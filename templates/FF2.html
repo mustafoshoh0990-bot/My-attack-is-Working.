@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Fire - Панель Сокровищ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Игровая страница стили */
+        .game-page-bg {
+            background-color: #0c4a6e;
+            color: #f8fafc;
+            background-image: url('https://frontalgamer.com/wp-content/uploads/2022/05/Conseguir-diamantes-gratis-Free-Fire.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card {
+            background-color: rgba(13, 30, 48, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(49, 64, 86, 0.2);
+        }
+
+        .btn-primary {
+            @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 w-full font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2;
+        }
+
+        .btn-green {
+            @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 w-full font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2;
+        }
+
+        .btn-disabled {
+            @apply bg-gray-500 text-gray-300 cursor-not-allowed w-full font-bold py-3 px-4 rounded-lg;
+        }
+
+        .coin-icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            background: linear-gradient(135deg, #fef08a, #facc15);
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 0.5rem;
+            box-shadow: 0 0 8px #facc15;
+        }
+
+        .diamond-icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+            vertical-align: middle;
+            margin-right: 0.5rem;
+            box-shadow: 0 0 8px #8b5cf6;
+        }
+
+        .gift-icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            background: linear-gradient(135deg, #fef08a, #f87171);
+            clip-path: polygon(0% 25%, 50% 0%, 100% 25%, 100% 100%, 0% 100%);
+            vertical-align: middle;
+            margin-right: 0.5rem;
+        }
+
+        .modal {
+            @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75 backdrop-filter backdrop-blur-sm;
+        }
+
+        .modal-content {
+            @apply bg-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background-color: #374151;
+            color: #ffffff;
+            border: 1px solid #4b5563;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="game-page-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md mx-auto">
+        <div class="mb-4 text-center">
+            <img id="game-image" src="https://avatars.mds.yandex.net/i?id=ee9a4faba7d57306afe96f5e0d3bb7f7b27dd979-4257546-images-thumbs&n=13" alt="Game Image" class="w-full max-w-xs mx-auto rounded-lg shadow-lg">
+        </div>
+
+        <div id="rewards-view" class="active">
+            <div class="card p-8 rounded-2xl shadow-xl text-center">
+                <h1 class="text-3xl font-extrabold mb-2">Панель Сокровищ</h1>
+                <p class="text-slate-400 mb-2">Игрок: {{ user.uid }}</p>
+                <p class="text-slate-400 mb-6">Собирайте монеты и обменивайте их на реальные алмазы!</p>
+
+                <div class="grid grid-cols-2 gap-4 bg-slate-800 p-6 rounded-xl my-4">
+                    <div class="flex flex-col items-center">
+                        <p class="text-slate-400 font-medium">Ваши Монеты</p>
+                        <div class="flex items-center text-4xl font-extrabold my-2 text-white">
+                            <span class="coin-icon"></span>
+                            <span id="coins-counter">{{ user.coins }}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <p class="text-slate-400 font-medium">Ваши Алмазы</p>
+                        <div class="flex items-center text-4xl font-extrabold text-violet-500">
+                            <span class="diamond-icon"></span>
+                            <span id="diamonds-counter">{{ user.diamonds }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="my-6 space-y-4">
+                    <button id="exchange-button" class="btn-primary">Обменять на 35 Алмазов (500 монет)</button>
+                    <button id="gift-button" class="btn-green">
+                        <span class="gift-icon"></span>
+                        Получить ежедневный подарок
+                    </button>
+                    <button id="gemini-button" class="w-full font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-700 text-white hover:bg-gray-800 focus:ring-gray-600">
+                        Получить ✨ совет от ИИ !
+                    </button>
+                </div>
+                <div id="status-message" class="mt-4 font-bold h-6 text-sm"></div>
+            </div>
+            <button id="withdraw-button" class="btn-primary mt-4">Вывод</button>
+
+            <div class="mt-4 text-center">
+                <a href="/" class="text-blue-400 hover:text-blue-300 underline">
+                    ← Вернуться к главной
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна для игры -->
+    <div id="withdraw-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Вывод Алмазов</h2>
+            <p class="text-slate-400 mb-6">Введите UID игрока, чтобы вывести алмазы.</p>
+            <input id="uid-input" type="text" placeholder="UID игрока" class="input-field mb-4" value="{{ user.uid }}">
+            <button id="submit-withdraw" class="btn-green">Вывести 100 Алмазов</button>
+        </div>
+    </div>
+
+    <div id="gemini-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Совет от ИИ</h2>
+            <p id="gemini-text" class="text-slate-400 mb-6"></p>
+            <button id="close-gemini-modal" class="btn-green">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        const USER_UID = "{{ user.uid }}";
+        let coins = parseInt("{{ user.coins }}") || 0;
+        let diamonds = parseInt("{{ user.diamonds }}") || 0;
+
+        // DOM элементы
+        const coinsCounter = document.getElementById('coins-counter');
+        const diamondsCounter = document.getElementById('diamonds-counter');
+        const exchangeButton = document.getElementById('exchange-button');
+        const giftButton = document.getElementById('gift-button');
+        const withdrawButton = document.getElementById('withdraw-button');
+        const withdrawModal = document.getElementById('withdraw-modal');
+        const submitWithdrawButton = document.getElementById('submit-withdraw');
+        const uidInput = document.getElementById('uid-input');
+        const statusMessage = document.getElementById('status-message');
+        const geminiButton = document.getElementById('gemini-button');
+        const geminiModal = document.getElementById('gemini-modal');
+        const geminiText = document.getElementById('gemini-text');
+        const closeGeminiModal = document.getElementById('close-gemini-modal');
+
+        // Константы игры
+        const EXCHANGE_COST = 500;
+        const EXCHANGE_REWARD = 35;
+        const WITHDRAWAL_REWARD = 100;
+
+        // Состояние игры
+        let intervalId = null;
+        let isExchanging = false;
+        let lastGiftDate = localStorage.getItem('lastGiftDate_' + USER_UID);
+
+        // Обновление счетчиков на экране
+        function updateCounters() {
+            coinsCounter.textContent = coins;
+            diamondsCounter.textContent = diamonds;
+        }
+
+        // Сохранение прогресса на сервер
+        async function saveProgress() {
+            try {
+                const response = await fetch('/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: USER_UID,
+                        coins: coins,
+                        diamonds: diamonds
+                    })
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Ошибка сохранения:', result.error);
+                }
+            } catch (error) {
+                console.error('Ошибка при сохранении прогресса:', error);
+            }
+        }
+
+        // Запуск генерации монет
+        function startCoinGeneration() {
+            if (intervalId) clearInterval(intervalId);
+
+            intervalId = setInterval(() => {
+                coins += 1;
+                updateCounters();
+                // Сохраняем прогресс каждые 10 секунд
+                if (coins % 10 === 0) {
+                    saveProgress();
+                }
+            }, 1000);
+        }
+
+        // Обмен монет на алмазы
+        exchangeButton.addEventListener('click', async () => {
+            if (isExchanging) {
+                statusMessage.textContent = 'Обмен уже идёт...';
+                return;
+            }
+
+            statusMessage.classList.remove('text-green-500', 'text-red-500', 'text-blue-500');
+
+            if (coins >= EXCHANGE_COST) {
+                isExchanging = true;
+                exchangeButton.disabled = true;
+                statusMessage.textContent = 'Обработка обмена...';
+                statusMessage.classList.add('text-blue-500');
+
+                setTimeout(async () => {
+                    coins -= EXCHANGE_COST;
+                    diamonds += EXCHANGE_REWARD;
+                    updateCounters();
+                    await saveProgress();
+                    statusMessage.textContent = 'Обмен выполнен ✅';
+                    statusMessage.classList.replace('text-blue-500', 'text-green-500');
+                    isExchanging = false;
+                    exchangeButton.disabled = false;
+                }, 3000);
+            } else {
+                statusMessage.textContent = `Нужно ещё ${EXCHANGE_COST - coins} монет для обмена`;
+                statusMessage.classList.add('text-red-500');
+            }
+        });
+
+        // Вывод алмазов
+        withdrawButton.addEventListener('click', () => {
+            withdrawModal.classList.remove('hidden');
+            statusMessage.textContent = '';
+        });
+
+        submitWithdrawButton.addEventListener('click', async () => {
+            const uid = uidInput.value.trim();
+
+            if (uid === '') {
+                statusMessage.textContent = 'Пожалуйста, введите UID.';
+                statusMessage.classList.add('text-red-500');
+                return;
+            }
+
+            if (diamonds < WITHDRAWAL_REWARD) {
+                withdrawModal.classList.add('hidden');
+                statusMessage.textContent = `Недостаточно Алмазов. Нужно ${WITHDRAWAL_REWARD} для вывода.`;
+                statusMessage.classList.add('text-red-500');
+                return;
+            }
+
+            withdrawModal.classList.add('hidden');
+            statusMessage.classList.remove('text-green-500', 'text-red-500', 'text-blue-500');
+            statusMessage.textContent = 'Идёт вывод...';
+            statusMessage.classList.add('text-blue-500');
+
+            setTimeout(async () => {
+                diamonds -= WITHDRAWAL_REWARD;
+                updateCounters();
+                await saveProgress();
+                statusMessage.textContent = `Выведено ${WITHDRAWAL_REWARD} Алмазов на UID ${uid} ✅`;
+                statusMessage.classList.replace('text-blue-500', 'text-green-500');
+            }, 5000);
+        });
+
+        // Закрытие модальных окон
+        window.addEventListener('click', (event) => {
+            if (event.target === withdrawModal) {
+                withdrawModal.classList.add('hidden');
+            }
+            if (event.target === geminiModal) {
+                geminiModal.classList.add('hidden');
+            }
+        });
+
+        // Советы от ИИ
+        async function getGeminiResponse() {
+            const tips = [
+                'Привет, путешественник! Чтобы быстро разбогатеть, обменивай монеты на алмазы сразу, как только накопишь 500!',
+                'Не забывай получать ежедневный подарок — это 100 монет бесплатно каждый день!',
+                'Терпение — ключ к успеху! Монеты генерируются автоматически каждую секунду.',
+                'Совет от мастера: копи алмазы для больших покупок в Free Fire!',
+                'Помни: чем дольше ты остаёшься в игре, тем больше монет получаешь!',
+                'Твой UID: ' + USER_UID + ' - не забудь его при выводе алмазов!',
+                'Оставляй страницу открытой, чтобы монеты продолжали накапливаться!'
+            ];
+
+            return tips[Math.floor(Math.random() * tips.length)];
+        }
+
+        geminiButton.addEventListener('click', async () => {
+            geminiText.textContent = 'NPC думает...';
+            geminiModal.classList.remove('hidden');
+
+            setTimeout(async () => {
+                const advice = await getGeminiResponse();
+                geminiText.textContent = advice;
+            }, 1500);
+        });
+
+        closeGeminiModal.addEventListener('click', () => {
+            geminiModal.classList.add('hidden');
+        });
+
+        // Ежедневный подарок
+        function checkGiftStatus() {
+            const today = new Date().toDateString();
+
+            if (lastGiftDate === today) {
+                giftButton.textContent = 'Подарок уже получен сегодня';
+                giftButton.classList.replace('btn-green', 'btn-disabled');
+                giftButton.disabled = true;
+            } else {
+                giftButton.innerHTML = '<span class="gift-icon"></span>Получить ежедневный подарок';
+                giftButton.classList.replace('btn-disabled', 'btn-green');
+                giftButton.disabled = false;
+            }
+        }
+
+        giftButton.addEventListener('click', async () => {
+            const today = new Date().toDateString();
+            lastGiftDate = today;
+            localStorage.setItem('lastGiftDate_' + USER_UID, today);
+            coins += 100;
+            updateCounters();
+            await saveProgress();
+            statusMessage.textContent = 'Получено 100 монет! ✅';
+            statusMessage.classList.add('text-green-500');
+            checkGiftStatus();
+        });
+
+        // Инициализация игры
+        function initializeGame() {
+            checkGiftStatus();
+            startCoinGeneration();
+            updateCounters();
+
+            // Сохраняем прогресс каждые 30 секунд
+            setInterval(saveProgress, 30000);
+        }
+
+        // Сохранение при закрытии страницы
+        window.addEventListener('beforeunload', () => {
+            saveProgress();
+        });
+
+        // Запуск игры
+        window.addEventListener('DOMContentLoaded', initializeGame);
+
+        // Дополнительные функции для улучшения игрового опыта
+
+        // Анимация при получении монет
+        function animateCoinGain(amount = 1) {
+            const coinElement = document.getElementById('coins-counter');
+            coinElement.style.transform = 'scale(1.2)';
+            coinElement.style.color = '#facc15';
+
+            setTimeout(() => {
+                coinElement.style.transform = 'scale(1)';
+                coinElement.style.color = '#ffffff';
+            }, 200);
+        }
+
+        // Анимация при получении алмазов
+        function animateDiamondGain() {
+            const diamondElement = document.getElementById('diamonds-counter');
+            diamondElement.style.transform = 'scale(1.3)';
+            diamondElement.style.color = '#a78bfa';
+
+            setTimeout(() => {
+                diamondElement.style.transform = 'scale(1)';
+                diamondElement.style.color = '#8b5cf6';
+            }, 300);
+        }
+
+        // Улучшенная генерация монет с анимацией
+        function startCoinGenerationWithAnimation() {
+            if (intervalId) clearInterval(intervalId);
+
+            intervalId = setInterval(() => {
+                coins += 1;
+                updateCounters();
+                animateCoinGain();
+
+                // Сохраняем прогресс каждые 10 секунд
+                if (coins % 10 === 0) {
+                    saveProgress();
+                }
+            }, 1000);
+        }
+
+        // Обновляем функцию инициализации
+        function initializeGameWithAnimations() {
+            checkGiftStatus();
+            startCoinGenerationWithAnimation();
+            updateCounters();
+
+            // Сохраняем прогресс каждые 30 секунд
+            setInterval(saveProgress, 30000);
+
+            // Показываем приветственное сообщение
+            setTimeout(() => {
+                statusMessage.textContent = `Добро пожаловать, игрок ${USER_UID}! Монеты начали генерироваться! 🎮`;
+                statusMessage.classList.add('text-green-500');
+            }, 1000);
+        }
+
+        // Улучшенный обмен с анимацией
+        exchangeButton.addEventListener('click', async () => {
+            if (isExchanging) {
+                statusMessage.textContent = 'Обмен уже идёт...';
+                return;
+            }
+
+            statusMessage.classList.remove('text-green-500', 'text-red-500', 'text-blue-500');
+
+            if (coins >= EXCHANGE_COST) {
+                isExchanging = true;
+                exchangeButton.disabled = true;
+                exchangeButton.textContent = 'Обмениваем...';
+                statusMessage.textContent = 'Обработка обмена...';
+                statusMessage.classList.add('text-blue-500');
+
+                setTimeout(async () => {
+                    coins -= EXCHANGE_COST;
+                    diamonds += EXCHANGE_REWARD;
+                    updateCounters();
+                    animateDiamondGain();
+                    await saveProgress();
+                    statusMessage.textContent = `Обмен выполнен! Получено ${EXCHANGE_REWARD} алмазов ✅`;
+                    statusMessage.classList.replace('text-blue-500', 'text-green-500');
+                    isExchanging = false;
+                    exchangeButton.disabled = false;
+                    exchangeButton.textContent = 'Обменять на 35 Алмазов (500 монет)';
+                }, 3000);
+            } else {
+                const needed = EXCHANGE_COST - coins;
+                statusMessage.textContent = `Нужно ещё ${needed} монет для обмена (осталось ${Math.ceil(needed)} секунд)`;
+                statusMessage.classList.add('text-red-500');
+            }
+        });
+
+        // Клик по монетам для бонуса
+        coinsCounter.addEventListener('click', () => {
+            coins += 5;
+            updateCounters();
+            animateCoinGain(5);
+            statusMessage.textContent = 'Бонус! +5 монет за клик! 🎯';
+            statusMessage.classList.add('text-green-500');
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 2000);
+        });
+
+        // Клик по алмазам для информации
+        diamondsCounter.addEventListener('click', () => {
+            statusMessage.textContent = `У вас ${diamonds} алмазов. Нужно ${WITHDRAWAL_REWARD} для вывода! 💎`;
+            statusMessage.classList.add('text-blue-500');
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 3000);
+        });
+
+        // Звуковые эффекты (без реальных звуков, но с визуальной обратной связью)
+        function playClickEffect(element) {
+            element.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.8)';
+            setTimeout(() => {
+                element.style.boxShadow = '';
+            }, 200);
+        }
+
+        // Добавляем эффекты для всех кнопок
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', () => {
+                playClickEffect(button);
+            });
+        });
+
+        // Счетчик времени в игре
+        let gameStartTime = Date.now();
+        let timeInGame = 0;
+
+        function updateGameTime() {
+            timeInGame = Math.floor((Date.now() - gameStartTime) / 1000);
+            const minutes = Math.floor(timeInGame / 60);
+            const seconds = timeInGame % 60;
+
+            // Можно добавить отображение времени в интерфейс
+            console.log(`Время в игре: ${minutes}:${seconds.toString().padStart(2, '0')}`);
+        }
+
+        setInterval(updateGameTime, 1000);
+
+        // Достижения
+        const achievements = {
+            firstExchange: false,
+            hundred_coins: false,
+            thousand_coins: false,
+            first_diamond: false,
+            first_withdrawal: false
+        };
+
+        function checkAchievements() {
+            if (coins >= 100 && !achievements.hundred_coins) {
+                achievements.hundred_coins = true;
+                showAchievement('Первая сотня! 🏆', 'Вы заработали 100 монет!');
+            }
+
+            if (coins >= 1000 && !achievements.thousand_coins) {
+                achievements.thousand_coins = true;
+                showAchievement('Магнат! 💰', 'У вас 1000+ монет!');
+            }
+
+            if (diamonds >= 1 && !achievements.first_diamond) {
+                achievements.first_diamond = true;
+                showAchievement('Первый алмаз! 💎', 'Вы получили свой первый алмаз!');
+            }
+        }
+
+        function showAchievement(title, description) {
+            const achievementDiv = document.createElement('div');
+            achievementDiv.className = 'fixed top-4 right-4 bg-yellow-600 text-white p-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-500';
+            achievementDiv.innerHTML = `
+                <div class="font-bold">${title}</div>
+                <div class="text-sm">${description}</div>
+            `;
+
+            document.body.appendChild(achievementDiv);
+
+            setTimeout(() => {
+                achievementDiv.style.transform = 'translateX(0)';
+            }, 100);
+
+            setTimeout(() => {
+                achievementDiv.style.transform = 'translateX(full)';
+                setTimeout(() => {
+                    document.body.removeChild(achievementDiv);
+                }, 500);
+            }, 3000);
+        }
+
+        // Обновляем функцию обновления счетчиков с проверкой достижений
+        const originalUpdateCounters = updateCounters;
+        updateCounters = function() {
+            originalUpdateCounters();
+            checkAchievements();
+        };
+
+        // Замена инициализации на улучшенную версию
+        window.removeEventListener('DOMContentLoaded', initializeGame);
+        window.addEventListener('DOMContentLoaded', initializeGameWithAnimations);
+
+        // Автосохранение при потере фокуса
+        window.addEventListener('blur', saveProgress);
+
+        // Периодическое обновление для предотвращения потери данных
+        setInterval(() => {
+            if (coins > 0 || diamonds > 0) {
+                saveProgress();
+            }
+        }, 15000); // каждые 15 секунд
+
+        // Уведомления о важных событиях
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 opacity-0 transition-opacity duration-300`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '1';
+            }, 100);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Улучшенная функция сохранения с уведомлениями
+        const originalSaveProgress = saveProgress;
+        saveProgress = async function() {
+            try {
+                await originalSaveProgress();
+                // Тихое сохранение без уведомлений для частых сохранений
+            } catch (error) {
+                showNotification('Ошибка сохранения прогресса!', 'error');
+                console.error('Ошибка сохранения:', error);
+            }
+        };
+
+        console.log('🎮 Игра полностью загружена! Удачи в сборе алмазов!');
+    </script>
+</body>
+</html>
