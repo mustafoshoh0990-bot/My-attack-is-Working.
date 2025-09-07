@@ -316,16 +316,16 @@ if __name__ == "__main__":
     print("🔍 Отладка: http://localhost:5000/debug")
     print("🔐 Логин админки: admin | Пароль: 12345")
 
-    # Создаем файл TaFo.json если его нет
-    if not os.path.exists(USERS_FILE):
-        with open(USERS_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f)
-        print(f"📁 Создан файл {USERS_FILE}")
-    else:
-        print(f"📁 Файл {USERS_FILE} уже существует")
+   # Создаем файл TaFo.json если его нет
+if not os.path.exists(USERS_FILE):
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump([], f)
+    print(f"📁 Создан файл {USERS_FILE}")
+else:
+    print(f"📁 Файл {USERS_FILE} уже существует")
 
 
-    if __name__ == "__main__":
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Render даст свой порт
     app.run(debug=True, host='0.0.0.0', port=port)
 
